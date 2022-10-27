@@ -131,7 +131,7 @@ ui-tests/playwright-report
 .jupyter_ystore.db
 
 # csv files
-.csv
+*.csv
 
 # latex stuff pdf files
 ## Core latex/pdflatex auxiliary files:
