@@ -49,7 +49,7 @@ In order to perform such study, a dataset consisting of CPI (and several other i
 
 \begin{figure}[hbtp]
     \centering
-    \includegraphics[scale=0.68]{../figs/cpi.pdf}
+    \includegraphics{../figs/cpi.pdf}
     \caption{Denmark CPI (All Items)}
     \label{fig:cpi}
 \end{figure}
@@ -137,7 +137,7 @@ whereas if the autocorrelation quickly drops to zero, it generally means that th
 
 \begin{figure}[hbtp]
     \centering
-    \includegraphics[scale=0.68]{../figs/trend.pdf}
+    \includegraphics{../figs/trend.pdf}
     \caption{Trend fitting}
     \label{fig:trend}
 \end{figure}
@@ -146,7 +146,7 @@ The results suggest that the time series's trend is better described by the LOWE
 
 \begin{figure*}[hbtp]
     \centering
-    \includegraphics[scale=0.7]{../figs/season.pdf}
+    \includegraphics{../figs/season.pdf}
     \caption{The frequency spectrum (right), the trendless timeseries and the seasonality fitting (top left), the estimate erratic component (bottom left).}
     \label{fig:season}
 \end{figure*}
@@ -154,19 +154,19 @@ The results suggest that the time series's trend is better described by the LOWE
 
 Regarding seasonality, a careful glance suggests a clear pattern every 6 months and, less noticeably, every year. Through spectral analysis, we we're able to identify 1 and 2 cycles per year, as seen in Fig \ref{fig:season}, and thus we filtered the other non relevant frequencies. The estimated seasonality is also illustrated in Fig \ref{fig:season}, from which we can observe an adequate estimation of the cyclic behaviour, given that it models both cycles fairly well. Additionally, the erratic component resembles some stationarity, although some patterns still remain visible; this most likely stems from this method relying in estimations and decomposition models.
 
-\begin{figure*}[hbtp]
+\begin{figure}[hbtp]
     \centering
-    \includegraphics[scale=0.7]{../figs/differencing.pdf}
+    \includegraphics{../figs/differencing.pdf}
     \caption{Stationarity by differencing}
     \label{fig:differencing}
-\end{figure*}
+\end{figure}
 
-\begin{figure*}[hbtp]
+\begin{figure}[hbtp]
     \centering
-    \includegraphics[scale=0.7]{../figs/acs_diff.pdf}
+    \includegraphics{../figs/acs_diff.pdf}
     \caption{Correlogram of first-order differencing (top) and seasonal differencing (bottom)}
     \label{fig:acs_diff}
-\end{figure*}
+\end{figure}
 
 The differencing approach on the other hand, yielded more clarifying results. This may be due to differencing not resorting to the estimation of each individual component, and instead computing the differences between data points and removing the changes in level. As seen in Figure \ref{fig:differencing}, the first difference was not enough to achieve stationarity given some clear patterns and a slight upwards slope, whereas the seasonal difference time series has constant variance and is arguably horizontal. Observing the correlogram in Fig \ref{fig:acs_diff}, we can argue for non-stationarity of the first difference, considering i) most values fall outside of the confidence bounds ii) a strong decreasing autocorrelation for lag values multiple of 6 and 12, which happens to be the most relevant seasonal patterns in the timeseries. On the other hand, the seasonal difference is clearly stationary, given that i) almost all values tend to be within the confidence bounds, apart from a few exceptions\footnote{Probably due to computational errors given the small sample size $N$} ii) the autocorrelation instantly drops to zero.
 
