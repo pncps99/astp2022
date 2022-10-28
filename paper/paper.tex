@@ -7,7 +7,6 @@
 \usepackage{graphicx}
 \usepackage{textcomp}
 \usepackage[table]{xcolor}
-\usepackage{pgfplots}
 
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
@@ -142,7 +141,7 @@ whereas if the autocorrelation quickly drops to zero, it generally means that th
     \label{fig:trend}
 \end{figure}
 
-The results suggest that the time series's trend is better described by the LOWESS approach as seen in Table \ref{fig:trend} and Figure \ref{fig:trend}\footnote{Graphing period was shortened for better visualization}. The linear and quadratic trends, due to their low-order nature and usage of the global structure of the data, are not sensitive to oscillations and thus are only able to give a rough approximation. The Moving Average and LOWESS fittings, on the other hand, rely on the local structure of the data and are non-linear, allowing them tend to these oscillations. LOWESS yields a better approximation as it performs multiple local (weighted) regression instead of averages, thus being more sensitive to outliers.
+The results suggest that the time series's trend is better described by the LOWESS approach as seen in Table \ref{fig:trend} and Figure \ref{fig:trend}. The linear and quadratic trends, due to their low-order nature and usage of the global structure of the data, are not sensitive to oscillations and thus are only able to give a rough approximation. The Moving Average and LOWESS fittings, on the other hand, rely on the local structure of the data and are globally non-linear, allowing them to tend to these oscillations. LOWESS yields a better approximation as it performs multiple local (weighted) regression instead of averages, thus being more sensitive to outliers.
 
 \begin{figure*}[hbtp]
     \centering
