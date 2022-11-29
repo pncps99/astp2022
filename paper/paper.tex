@@ -117,7 +117,15 @@ where values that fall outside this region are \textit{significantly} different 
 whereas if the autocorrelation quickly drops to zero, it generally means that the time series is stationary. The \textbf{Augmented Dickey-Fuller test} is a statistical test that tests the null hypotheses $H_0$ that a unit root is present in a time series. A time series is considered to be non stationary if a unit root is present and stationary otherwise.
 
 \subsection{Modelling}
+For the modelling, considering the time series is indeed non-stationary and exhibits cyclic behaviour, we use a SARIMA model. A SARIMA model extends the ARIMA model with seasonal terms:
+\[
+    \text{SARIMA}(p,d,q)\text{X}(P,D,Q)_S
+\]
+
+where $d$ and $D$ stand for the order of first and seasonal differencing, respectively; $p$ and $P$ represent the Autoregressive (AR) model orders for the non-seasonal and seasonal part of the model, respectively; $q$ and $Q$ stand for the Moving Average (MA) model orders for the non-seasonal and seasonal part of the model, respectively, and $S$ represents the dominant cyclic behaviour.
+
 \subsection{Forecasting}
+
 \section{Results}
 
 \begin{table}[btp]
@@ -183,6 +191,41 @@ The differencing approach on the other hand, yielded more clarifying results. Th
 \end{table}
 
 Table \ref{tab:adfuller} presents the results of the ADF unit root test. As expected, $H_0$ is accepted for the raw time series, as $p\text{-value}>0.05$, whereas it's actually rejected for the first and seasonal differences, considering the \textit{p}-value is (quite) inferior to $0.05$ and that the test statistic is below the $1\%$ confidence level. While this poses a contradiction for the first difference, one should take into account that the ADF test actually tests if there is or isn't a need for further differencing, thus suggesting that the first difference doens't require any more differencing, which can be construed as stationarity.
+
+\begin{table}[btp]
+    \caption{SARIMA grid-search}
+    \centering
+    \begin{tabular}{c|c|c}
+        Parameter & Range & Best \\
+        \hline
+        $p$ & $[0,2[$ & $1$ \\
+        $q$ & $[0,2[$ & $0$ \\
+        $P$ & $[0,4[$ & $0$ \\
+        $Q$ & $[0,3[$ & $1$ \\
+        \hline
+        \textbf{Best AIC}& \multicolumn{2}{c}{$\approx -209.7$} \\
+        \textbf{Best $\mathcal{L}$}& \multicolumn{2}{c}{$\approx 107.9$} \\
+        \textbf{Q-statistic}& \multicolumn{2}{c}{$\approx 0$}
+    \end{tabular}
+    \label{tab:grid-search}
+\end{table}
+
+
+These kind of assesments allow us to derive the parameters for time series modelling. Because stationary was only attained with a first difference and a seasonal difference, we can set $(d=1;D=1;S=12)$. Moreover, from the ACF and PACF we can guess the AR and MA parameters of the model. Instead, we opted by a grid-search approach for finding the parameters, considering the ACF and PACF are often times deceiving, as the parameters we derived from a visual analysis yielded a higher AIC score ($\approx -204.2$).
+
+% plot the char roots
+
+Figure \ref{} illustrates the characteristic roots for the model fitted to the time series. Both the AR and MA polynomial roots happen to lie outside the unit circle, which is mandatory for preserving the stationarity and invertibility properties of the model. However, the MA roots lie too close to the unit circle: these can become numerically unstable and eventually lead to poor forecasts, as we later discuss.
+
+% plot the train set vs model fitting, residuals and ACF of residuals
+
+Analyzing the residuals provides a clearer picture. The residuals plotting indicates the presence of an i.i.d. process, also considering $\mu_\epsilon\approx -0.0046$. However, the standard deviation is slightly but significantly larger then $\frac{1}{\sqrt{N}}$ ($\sigma_\epsilon\approx 0.17$), which suggest a lot of variance in the residuals. Moreover, given the absence of correlation in the ACF of the residuals (after $T>0$ the values quickly drop to $0$), we can argue the model is adequate.
+
+% Maybe mention Q-statistic
+
+% plot residual distribution
+
+The Figure \ref{} describes the residuals' ACF values distribution, which seems slightly skewed to the left, possibly alerting for non-normally distributed ACF values. Moreover, it seems that the number of available samples has relaxed the confidence bounds to a broader spectrum. It so happens to be that the available data for training consists of only $N=312$ samples, which, and according to the Law of Large Numbers, doesn't provide enough statistical significance for the model to approximate fittings close the expected value. Such is also evident by the close, but not quite right, approximation to the theoretical probability density function. Some experiments revelead that, by reserving more data to the training (and less for testing), we were able to achieve optimal results, although at the expense of not enought data for forecasting.
 
 \section{Discussion}
 
