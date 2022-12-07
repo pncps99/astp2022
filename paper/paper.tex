@@ -44,7 +44,6 @@ An accurate modelling of a country's CPI is key to understanding out it behaves 
 
 In this paper, we present a case study on the country of Denmark, comprising an analysis and forecasting model of the CPI.
 
-\subsection{Related Work}
 \subsection{Data}
 In order to perform such study, a dataset consisting of CPI (and several other indicators) records was made available. From the 191 available countries, we selected Denmark as a subject of study and therefore extracted a time series of monthly CPI (all items) values from 1990 up until 2022.
 
@@ -127,9 +126,12 @@ For the modelling, considering the time series is indeed non-stationary and exhi
 where $d$ and $D$ stand for the order of first and seasonal differencing, respectively; $p$ and $P$ represent the Autoregressive (AR) model orders for the non-seasonal and seasonal part of the model, respectively; $q$ and $Q$ stand for the Moving Average (MA) model orders for the non-seasonal and seasonal part of the model, respectively, and $S$ represents the dominant cyclic behaviour.
 
 \subsection{Forecasting}
-For the forecasting task, we consider both the previous SARIMA model of the timeseries, and also the Holt-Winters Exponential Smoothing (or Triple Exponential Smoothing).
+For the forecasting task, we consider both the previous SARIMA model of the timeseries, and also the Holt-Winters Exponential Smoothing technique for modelling the three components of a timeseries: i) level  $L(n)$ ii) trend $T(n)$ and iii) seasonality $I(n)$. These can be modelled in an additive and multiplicative fashion deppending on whether the cyclic behaviour is somewhat constant across time or if it changes with proportion to the level, respectively. This also implies a careful tuning of the smoothing parameters $\alpha$, $\gamma$ and $\delta$.
+
+Moreover, we also investigate multivariate forecasting by coputing the cross-correlation sequence (CSS) of two additional timeseries, which helps understand how these relate to each other and at what time lags $T$. For forecasting, we use a Multi-Layer Perceptron (MLP) to regress the CPI based on a transformed dataset.
 
 \section{Results}
+The following section describes the results attained. Each method is evaluated in its own way, but for the modelling we use the $AIC$ and for forecasting we use the $RMSE$.
 \subsection{Characterization}\label{sec:characterization}
 
 \begin{table}[btp]
@@ -146,7 +148,7 @@ For the forecasting task, we consider both the previous SARIMA model of the time
     \label{tab:trend}
 \end{table}
 
-\begin{figure}[hbtp]
+\begin{figure}[H]
     \centering
     \includegraphics{../figs/trend.pdf}
     \caption{Trend fitting}
@@ -196,7 +198,7 @@ The differencing approach on the other hand, yielded more clarifying results. Th
 Table \ref{tab:adfuller} presents the results of the ADF unit root test. As expected, $H_0$ is accepted for the raw time series, as $p\text{-value}>0.05$, whereas it's actually rejected for the first and seasonal differences, considering the \textit{p}-value is inferior to $0.05$ and that the test statistic is below the $1\%$ confidence level for the \textit{seasonal difference}; for the \textit{first difference}, the \textit{p}-value is acceptable but the statistic is actually above between the $1\%$ and $5\%$ confidence level. While this poses a contradiction for the first difference, one should take into account that the ADF test actually tests if there is or isn't a need for further differencing, thus suggesting that the first difference doens't require any more differencing, which can be construed as stationarity.
 \subsection{Model Evaluation}
 
-\begin{table}[btp]
+\begin{table}[hbtp]
     \caption{Model grid-search}
     \centering
     \begin{tabular}{c|c|c}
@@ -224,7 +226,7 @@ Table \ref{tab:adfuller} presents the results of the ADF unit root test. As expe
     \label{tab:grid-search}
 \end{table}
 
-These kind of assesments allow us to derive the parameters for time series modelling. Because stationary was only attained with a first difference and a seasonal difference, we can set $(d=1;D=1;S=12)$. Moreover, from the ACF and PACF (see Appendix \ref{appendix:acf_pacf}) we can guess the AR and MA parameters of the model. Instead, we opted by a grid-search approach for finding the parameters, considering the ACF and PACF are often times deceiving, as the parameters we derived from a visual analysis yielded a better AIC score ($\approx -197.1$). Table \ref{tab:grid-search} summarizes the results attained.
+These kind of assesments allow us to derive the parameters for time series modelling. Because stationary was only attained with a first difference and a seasonal difference, we can set $(d=1;D=1;S=12)$. Moreover, from the ACF and PACF (see Appendix \ref{appendix:acf_pacf}) we can guess the AR and MA parameters of the model. Instead, we opted by a grid-search approach for finding the parameters, considering the ACF and PACF are often times deceiving, as the grid-search derived hyperparameters yielded a better AIC score ($\approx -197.1$). Table \ref{tab:grid-search} summarizes the results attained.
 
 \begin{figure}[H]
     \centering
@@ -233,7 +235,7 @@ These kind of assesments allow us to derive the parameters for time series model
     \label{fig:char_roots}
 \end{figure}
 
-Figure \ref{fig:char_roots} illustrates the characteristic roots for the model fitted to the time series. Both the AR and MA polynomial roots happen to lie outside the unit circle, which is mandatory for preserving the stationarity and invertibility properties of the model. However, the MA roots lie too close to the unit circle: these can become numerically unstable and eventually lead to poor forecasts, as we later discuss.
+Figure \ref{fig:char_roots} illustrates the characteristic roots for the SARIMA model fitted to the timeseries. Both the AR and MA polynomial roots happen to lie outside the unit circle, which is mandatory for preserving the stationarity and invertibility properties of the model. However, the MA roots lie too close to the unit circle: these can become numerically unstable and eventually lead to poor forecasts, as we later discuss.
 
 \begin{figure}[H]
     \centering
@@ -266,7 +268,7 @@ Regarding the Holt-Winters Exponential Smoothing approach, we found the best par
     \label{fig:forecasting}
 \end{figure}
 
-For forecasting purposes, we found the Holt-Winters method to actually be superior on the test set, see Table \ref{tab:forecasting}. As illustrated by Figure \ref{fig:forecasting} they both seem to capture seasonality adequately, but Holt-Winters seems more sensitive to the underlying trend. This is most likely due to how Holt-Winters expresses a process, i.e. as a (in this case, additive) composition of explicit individual components.
+For forecasting purposes, we found the Holt-Winters method to actually be superior on the test set, see Table \ref{tab:forecasting}. As illustrated by Figure \ref{fig:forecasting} they both seem to capture seasonality adequately, but Holt-Winters seems more sensitive to the underlying trend. This is most likely due to how Holt-Winters expresses a process, i.e. as a (in this case, additive) composition of explicit individual components. As we mentioned before, the characteristic roots of the MA process lie too close to the unit circle which renders the model numerically unstable: such may be an evident cause for poor forecasting by the SARIMA model.
 \subsection{Multivariate Forecasting}
 
 Moreover, we compare the time series of Denmark to that of Norway and Finland to uncover (or not) any relationship between them. We split the data into a training, validation and testing set, saving just $4$ years for validation and $1$ year (the last) for testing.
@@ -278,7 +280,7 @@ Moreover, we compare the time series of Denmark to that of Norway and Finland to
     \label{fig:cross_correlation_seq}
 \end{figure*}
 
-By the cross-correlation function between the different timeseries we find that Denmark and Finland are the most co-related ones and for the rest the little existent correlation is non-significative for larger lag values ($T>0$). Moreover, there seems to be a spike of correlation for lag of periods of $12$, which suggests that the timeseries exhibit cyclic behaviour with the same frequency and period.
+By the cross-correlation function between the different timeseries we find that Denmark and Finland are the most co-related ones, whilst for the remainder ones, the little existent correlation is non-significative for larger lag values ($T>0$). Moreover, there seems to be a spike of correlation for lag of periods of $12$, which suggests that the timeseries exhibit cyclic behaviour with the same frequency and period -- they share these properties.
 
 \begin{table}[btp]
     \caption{Multivariate Forecasting Results}
@@ -298,12 +300,14 @@ By the cross-correlation function between the different timeseries we find that 
     \label{fig:forecasting_multi}
 \end{figure}
 
-In this approach, we used an MLP to regress the values of the CPI based on features extracted from time-lagged versions of the Norway and Finland timeseries. As portrayed in Table \ref{tab:forecasting_multi}, the MLP actually attained an arguably low RMSE, considering time-delays of $[0,1,12]$ for both Norway and Finland and $[1,2,12]$ for itself, Denmark. Figure \ref{fig:forecasting_multi} illustrates the fitting by the model. Note that the scale of the CPI doesn't match that of the univariate forecasting as the MLP requires the data to be standardized. As such, it would be innapropriate to compare it to the univariate forecasting, besides the forecasting closely resembling the SARIMA model: the SARIMA error for the highest peak of the test set is $\epsilon=\approx 3$, while for the MLP is just $\epsilon=\approx 0.3$.
+In this approach, we used an MLP to regress the values of the CPI based on features extracted from time-lagged versions of the Norway and Finland timeseries. The original data was transformed into a dataset $N\times d$ where $N$ is the number of samples and $d$ is the number of features: i) original data was standardized the z-score technique ii) extracted time-lagged features were extracted with different delays (e.g. $[0,1]$). As portrayed in Table \ref{tab:forecasting_multi}, the MLP actually attained an arguably low RMSE, considering time-delays of $[0,1,12]$ for both Norway and Finland and $[1,2,12]$ for itself, Denmark. Figure \ref{fig:forecasting_multi} illustrates the forecasting of the last year. Note that the scale of the CPI doesn't match that of the univariate forecasting as the MLP requires the data to be standardized. As such, it would be innapropriate to compare it to the univariate forecasting, besides the forecasting closely resembling the SARIMA model: the SARIMA error for the highest peak of the test set is $\epsilon\approx 3$, while for the MLP is just $\epsilon\approx 0.3$.
 
 \section{Discussion}
 
 In this study we present a thorough analysis of the CPI for the country of Denmark. We began by providing a characterization of timeseries, for which we were able to uncover trend and cyclic behaviour. We then provided a comparison of two well-known models for timeseries, and found Holt-Winters 
 to the best at forecasting. Additionally, we also provided a multivariate approach to forecasting with a MLP, for which we considered two additional countries to uncover realistic relationships and predictive capabilities.
+
+For future work, we suggest the use of other indicators for performing multivariate forecasting. In itself, the CPI is a reflection of policies and power dynamics in a government and in the market, so it makes sense to leverage exogenous data to increase predictive capabilities. Moreover, we can also improve by review methods that better account for outliers -- sudden peaks -- in trend, as our work shows that to be the biggest weakness of our models forecasting ability.
 
 %\bibliography{bib}
 %\bibliographystyle{plain}
@@ -332,6 +336,6 @@ This parameter derivation fixes our SARIMA model at
     \text{SARIMA}(0,1,0)X(1,1,1,12)
 \]
 
-which yielded an AIC of $\approx -189.3$ which is actually close to the optimal value we found ($\approx -191.7$). This suggests that the ACF and PACF plots leave a considerable room for interpretation.
+which yielded an AIC of $\approx -189.3$, coming quite close to the optimal value we found ($\approx -191.7$). This suggests that the ACF and PACF plots leave a considerable room for interpretation and should be taken lightly on choosing the parameters.
 
 \end{document}
