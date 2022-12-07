@@ -2,9 +2,11 @@
 \IEEEoverridecommandlockouts
 % The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
 \usepackage{cite}
+\usepackage{float}
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{algorithmic}
 \usepackage{graphicx}
+\usepackage{hyperref}
 \usepackage{textcomp}
 \usepackage[table]{xcolor}
 
@@ -53,7 +55,7 @@ In order to perform such study, a dataset consisting of CPI (and several other i
     \label{fig:cpi}
 \end{figure}
 
-The time series was split into a training and test set in a $70/30$ ratio, respectively. Figure \ref{fig:cpi} illustrates the evolution of the CPI over a span of 22 years for the country of Denmark.
+The time series was split into a training and test set, for which consider only 12 samples (the last year) for testing. Figure \ref{fig:cpi} illustrates the evolution of the CPI over a span of 22 years for the country of Denmark.
 
 \section{Methods}
 The following section describes in detail the methods used for characterization, modelling and forecasting of the time series.
@@ -125,8 +127,10 @@ For the modelling, considering the time series is indeed non-stationary and exhi
 where $d$ and $D$ stand for the order of first and seasonal differencing, respectively; $p$ and $P$ represent the Autoregressive (AR) model orders for the non-seasonal and seasonal part of the model, respectively; $q$ and $Q$ stand for the Moving Average (MA) model orders for the non-seasonal and seasonal part of the model, respectively, and $S$ represents the dominant cyclic behaviour.
 
 \subsection{Forecasting}
+For the forecasting task, we consider both the previous SARIMA model of the timeseries, and also the Holt-Winters Exponential Smoothing (or Triple Exponential Smoothing).
 
 \section{Results}
+\subsection{Characterization}\label{sec:characterization}
 
 \begin{table}[btp]
     \caption{Trend assessment methods}
@@ -134,10 +138,10 @@ where $d$ and $D$ stand for the order of first and seasonal differencing, respec
     \begin{tabular}{l|c|c}
          Method & Parameters & MSE \\
          \hline
-         Linear & -- &  $1.38\text{e}-04$ \\
-         Quadratic & -- & $4.34\text{e}-05$ \\
-         Moving Average & $M=13$ & $1.39\text{e}-05$ \\
-         LOWESS & $M=13$ & \cellcolor{green!25}$9.43\text{e}-06$ \\
+         Linear & -- &  $2.47\text{e}-04$ \\
+         Quadratic & -- & $2.43\text{e}-04$ \\
+         Moving Average & $M=13$ & $1.29\text{e}-05$ \\
+         LOWESS & $M=13$ & \cellcolor{green!25}$1.09\text{e}-05$ \\
     \end{tabular}
     \label{tab:trend}
 \end{table}
@@ -158,17 +162,16 @@ The results suggest that the time series's trend is better described by the LOWE
     \label{fig:season}
 \end{figure*}
 
-
 Regarding seasonality, a careful glance suggests a clear pattern every 6 months and, less noticeably, every year. Through spectral analysis, we we're able to identify 1 and 2 cycles per year, as seen in Fig \ref{fig:season}, and thus we filtered the other non relevant frequencies. The estimated seasonality is also illustrated in Fig \ref{fig:season}, from which we can observe an adequate estimation of the cyclic behaviour, given that it models both cycles fairly well. Additionally, the erratic component resembles some stationarity, although some patterns still remain visible; this most likely stems from this method relying in estimations and decomposition models.
 
-\begin{figure}[hbtp]
+\begin{figure}
     \centering
     \includegraphics{../figs/differencing.pdf}
     \caption{Stationarity by differencing}
     \label{fig:differencing}
 \end{figure}
 
-\begin{figure}[hbtp]
+\begin{figure}
     \centering
     \includegraphics{../figs/acs_diff.pdf}
     \caption{Correlogram of first-order differencing (top) and seasonal differencing (bottom)}
@@ -183,53 +186,152 @@ The differencing approach on the other hand, yielded more clarifying results. Th
     \begin{tabular}{l|c|c||c}
         Subject & \textit{p}-value & ADF Statistic & 1\% Treshold  \\
         \hline
-        Raw timeseries & $0.9987$  &  $2.0048$ & $-3.456$ \\
-        First difference & \cellcolor{green!25} $0.0087$ & $-3.4741$ & $-3.456$ \\
-        Seasonal difference & \cellcolor{green!25} $\approx 0$ & $-7.1215$ & $-3.457$ \\
+        Raw timeseries & $0.645$  &  $-1.266$ & $-3.449$ \\
+        First difference & \cellcolor{green!25} $0.042$ & $-2.928$ & $-3.449$ \\
+        Seasonal difference & \cellcolor{green!25} $\approx 0$ & $-7.937$ & $-3.449$ \\
     \end{tabular}
     \label{tab:adfuller}
 \end{table}
 
-Table \ref{tab:adfuller} presents the results of the ADF unit root test. As expected, $H_0$ is accepted for the raw time series, as $p\text{-value}>0.05$, whereas it's actually rejected for the first and seasonal differences, considering the \textit{p}-value is (quite) inferior to $0.05$ and that the test statistic is below the $1\%$ confidence level. While this poses a contradiction for the first difference, one should take into account that the ADF test actually tests if there is or isn't a need for further differencing, thus suggesting that the first difference doens't require any more differencing, which can be construed as stationarity.
+Table \ref{tab:adfuller} presents the results of the ADF unit root test. As expected, $H_0$ is accepted for the raw time series, as $p\text{-value}>0.05$, whereas it's actually rejected for the first and seasonal differences, considering the \textit{p}-value is inferior to $0.05$ and that the test statistic is below the $1\%$ confidence level for the \textit{seasonal difference}; for the \textit{first difference}, the \textit{p}-value is acceptable but the statistic is actually above between the $1\%$ and $5\%$ confidence level. While this poses a contradiction for the first difference, one should take into account that the ADF test actually tests if there is or isn't a need for further differencing, thus suggesting that the first difference doens't require any more differencing, which can be construed as stationarity.
+\subsection{Model Evaluation}
 
 \begin{table}[btp]
-    \caption{SARIMA grid-search}
+    \caption{Model grid-search}
     \centering
     \begin{tabular}{c|c|c}
         Parameter & Range & Best \\
+        \hline\hline
+        \multicolumn{3}{c}{SARIMA} \\
         \hline
         $p$ & $[0,2[$ & $1$ \\
-        $q$ & $[0,2[$ & $0$ \\
+        $q$ & $[0,2[$ & $1$ \\
         $P$ & $[0,4[$ & $0$ \\
         $Q$ & $[0,3[$ & $1$ \\
         \hline
-        \textbf{Best AIC}& \multicolumn{2}{c}{$\approx -209.7$} \\
-        \textbf{Best $\mathcal{L}$}& \multicolumn{2}{c}{$\approx 107.9$} \\
-        \textbf{Q-statistic}& \multicolumn{2}{c}{$\approx 0$}
+        \textbf{Best AIC}& \multicolumn{2}{c}{$\approx -191.7$} \\
+        \textbf{Best $\mathcal{L}$}& \multicolumn{2}{c}{$\approx 99.8$} \\
+        \textbf{Q-statistic}& \multicolumn{2}{c}{$\approx 0.09$} \\
+        \hline\hline
+        \multicolumn{3}{c}{Holt-Winters} \\
+        \hline
+        $\alpha$ & $[0.1,0.9[$ & $0.8$ \\
+        $\delta$ & -- & $0.03$ \\
+        $\gamma$ & $[0.1,0.9[$ & $\approx 0.3$ \\
+        \hline\hline
+        \textbf{Best AIC}& \multicolumn{2}{c}{$\approx -1145$}
     \end{tabular}
     \label{tab:grid-search}
 \end{table}
 
+These kind of assesments allow us to derive the parameters for time series modelling. Because stationary was only attained with a first difference and a seasonal difference, we can set $(d=1;D=1;S=12)$. Moreover, from the ACF and PACF (see Appendix \ref{appendix:acf_pacf}) we can guess the AR and MA parameters of the model. Instead, we opted by a grid-search approach for finding the parameters, considering the ACF and PACF are often times deceiving, as the parameters we derived from a visual analysis yielded a better AIC score ($\approx -197.1$). Table \ref{tab:grid-search} summarizes the results attained.
 
-These kind of assesments allow us to derive the parameters for time series modelling. Because stationary was only attained with a first difference and a seasonal difference, we can set $(d=1;D=1;S=12)$. Moreover, from the ACF and PACF we can guess the AR and MA parameters of the model. Instead, we opted by a grid-search approach for finding the parameters, considering the ACF and PACF are often times deceiving, as the parameters we derived from a visual analysis yielded a higher AIC score ($\approx -204.2$).
+\begin{figure}[H]
+    \centering
+    \includegraphics{../figs/char_roots.pdf}
+    \caption{Characteristic roots of the AR and MA processes}
+    \label{fig:char_roots}
+\end{figure}
 
-% plot the char roots
+Figure \ref{fig:char_roots} illustrates the characteristic roots for the model fitted to the time series. Both the AR and MA polynomial roots happen to lie outside the unit circle, which is mandatory for preserving the stationarity and invertibility properties of the model. However, the MA roots lie too close to the unit circle: these can become numerically unstable and eventually lead to poor forecasts, as we later discuss.
 
-Figure \ref{} illustrates the characteristic roots for the model fitted to the time series. Both the AR and MA polynomial roots happen to lie outside the unit circle, which is mandatory for preserving the stationarity and invertibility properties of the model. However, the MA roots lie too close to the unit circle: these can become numerically unstable and eventually lead to poor forecasts, as we later discuss.
+\begin{figure}[H]
+    \centering
+    \includegraphics{../figs/dist_acf.pdf}
+    \caption{Distribution of the residuals' ACF}
+    \label{fig:dist_acf}
+\end{figure}
 
-% plot the train set vs model fitting, residuals and ACF of residuals
+Figure \ref{fig:dist_acf} illustrates the residuals' ACF values distribution, which arguably follows a normal distribution. Moreover, it seems that the number of available samples has relaxed the confidence bounds to a broader range. It so happens to be that the available data for training consists of only $N=372$ samples, which, and according to the Law of Large Numbers, doesn't provide enough statistical significance for the model to approximate fittings close the expected value. Such is also evident by the close, but not quite right, approximation to the theoretical probability density function.
 
-Analyzing the residuals provides a clearer picture. The residuals plotting indicates the presence of an i.i.d. process, also considering $\mu_\epsilon\approx -0.0046$. However, the standard deviation is slightly but significantly larger then $\frac{1}{\sqrt{N}}$ ($\sigma_\epsilon\approx 0.17$), which suggest a lot of variance in the residuals. Moreover, given the absence of correlation in the ACF of the residuals (after $T>0$ the values quickly drop to $0$), we can argue the model is adequate.
+Regarding the Holt-Winters Exponential Smoothing approach, we found the best parameters to be the ones detailed on Table \ref{tab:grid-search}.
+\subsection{Forecasting}
 
-% Maybe mention Q-statistic
+\begin{table}[btp]
+    \caption{Univariate Forecasting Results}
+    \centering
+    \begin{tabular}{l|c}
+        Model & RMSE $\downarrow$ \\
+        \hline
+        SARIMA & $\approx 1.508$ \\
+        Holt-Winters & \cellcolor{green!25} $\approx 1.291$ \\
+    \end{tabular}
+    \label{tab:forecasting}
+\end{table}
 
-% plot residual distribution
+\begin{figure}[H]
+    \centering
+    \includegraphics{../figs/forecast.pdf}
+    \caption{Forecasting on a 12-month period}
+    \label{fig:forecasting}
+\end{figure}
 
-The Figure \ref{} describes the residuals' ACF values distribution, which seems slightly skewed to the left, possibly alerting for non-normally distributed ACF values. Moreover, it seems that the number of available samples has relaxed the confidence bounds to a broader spectrum. It so happens to be that the available data for training consists of only $N=312$ samples, which, and according to the Law of Large Numbers, doesn't provide enough statistical significance for the model to approximate fittings close the expected value. Such is also evident by the close, but not quite right, approximation to the theoretical probability density function. Some experiments revelead that, by reserving more data to the training (and less for testing), we were able to achieve optimal results, although at the expense of not enought data for forecasting.
+For forecasting purposes, we found the Holt-Winters method to actually be superior on the test set, see Table \ref{tab:forecasting}. As illustrated by Figure \ref{fig:forecasting} they both seem to capture seasonality adequately, but Holt-Winters seems more sensitive to the underlying trend. This is most likely due to how Holt-Winters expresses a process, i.e. as a (in this case, additive) composition of explicit individual components.
+\subsection{Multivariate Forecasting}
+
+Moreover, we compare the time series of Denmark to that of Norway and Finland to uncover (or not) any relationship between them. We split the data into a training, validation and testing set, saving just $4$ years for validation and $1$ year (the last) for testing.
+
+\begin{figure*}[hbtp]
+    \centering
+    \includegraphics{../figs/cross_correlation_seq.pdf}
+    \caption{Cross-correlation sequence for timeseries of different countries}
+    \label{fig:cross_correlation_seq}
+\end{figure*}
+
+By the cross-correlation function between the different timeseries we find that Denmark and Finland are the most co-related ones and for the rest the little existent correlation is non-significative for larger lag values ($T>0$). Moreover, there seems to be a spike of correlation for lag of periods of $12$, which suggests that the timeseries exhibit cyclic behaviour with the same frequency and period.
+
+\begin{table}[btp]
+    \caption{Multivariate Forecasting Results}
+    \centering
+    \begin{tabular}{l|c}
+        Model & RMSE $\downarrow$ \\
+        \hline
+        MLP & $\approx 0.111$
+    \end{tabular}
+    \label{tab:forecasting_multi}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics{../figs/multi_forecast.pdf}
+    \caption{Multivariate forecasting on a 12-month period}
+    \label{fig:forecasting_multi}
+\end{figure}
+
+In this approach, we used an MLP to regress the values of the CPI based on features extracted from time-lagged versions of the Norway and Finland timeseries. As portrayed in Table \ref{tab:forecasting_multi}, the MLP actually attained an arguably low RMSE, considering time-delays of $[0,1,12]$ for both Norway and Finland and $[1,2,12]$ for itself, Denmark. Figure \ref{fig:forecasting_multi} illustrates the fitting by the model. Note that the scale of the CPI doesn't match that of the univariate forecasting as the MLP requires the data to be standardized. As such, it would be innapropriate to compare it to the univariate forecasting, besides the forecasting closely resembling the SARIMA model: the SARIMA error for the highest peak of the test set is $\epsilon=\approx 3$, while for the MLP is just $\epsilon=\approx 0.3$.
 
 \section{Discussion}
 
+In this study we present a thorough analysis of the CPI for the country of Denmark. We began by providing a characterization of timeseries, for which we were able to uncover trend and cyclic behaviour. We then provided a comparison of two well-known models for timeseries, and found Holt-Winters 
+to the best at forecasting. Additionally, we also provided a multivariate approach to forecasting with a MLP, for which we considered two additional countries to uncover realistic relationships and predictive capabilities.
+
 %\bibliography{bib}
 %\bibliographystyle{plain}
+
+\appendix
+\label{appendix:acf_pacf}
+
+\begin{figure}[hbtp]
+    \centering
+    \includegraphics{../figs/acf_pacf.pdf}
+    \caption{ACF and PACF of the stationary timeseries}
+    \label{fig:acf_pacf}
+\end{figure}
+
+\begin{figure}[hbtp]
+    \centering
+    \includegraphics{../figs/sacf_spacf.pdf}
+    \caption{Sample ACF and PACF of the stationary timeseries}
+    \label{fig:sacf_spacf}
+\end{figure}
+
+The following provides an analysis of the ACF and PACF of the timeseries for derivation of parameters for the SARIMA model. As previously mentioned, the raw timeseries presents a trend and clear seasonality. After characterization (see \ref{sec:characterization}), we found that a first difference followed by a seasonal difference can achieve stationarity, so the parameters $(d=1;D=1;S=12)$ are fixed. Figure \ref{fig:acf_pacf} shows that the auto-correlation quickly drops after $T=0$, so we fix $(p=0;q=0)$. Figure \ref{fig:sacf_spacf} pictures the sampled auto-correlation and partial auto-correlation and suggests that the former drops after the first seasonal period, whilst the latter only reaches values close to $0$ 2 cycles later. Therefore, we fix parameters $(Q=1;P=1)$, but we could be a bit more flexible and accept $P=2$ or $3$.
+
+This parameter derivation fixes our SARIMA model at
+\[
+    \text{SARIMA}(0,1,0)X(1,1,1,12)
+\]
+
+which yielded an AIC of $\approx -189.3$ which is actually close to the optimal value we found ($\approx -191.7$). This suggests that the ACF and PACF plots leave a considerable room for interpretation.
 
 \end{document}
